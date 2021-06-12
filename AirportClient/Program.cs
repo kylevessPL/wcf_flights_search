@@ -54,8 +54,14 @@ namespace AirportClient
                 }
                 catch (FaultException<ErrorResponse> ex)
                 {
-                    Console.WriteLine(
+                    Console.Error.WriteLine(
                         "Server responded with error message: " + ex.Detail.Type + ":" + ex.Detail.Message);
+                }
+                catch (CommunicationException ex)
+                {
+                    Console.Error.WriteLine(
+                        "Couldn't connect with the server: " + ex.Message);
+                    break;
                 }
             }
 
