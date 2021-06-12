@@ -28,7 +28,7 @@ namespace AirportClient
                 if (dateTimeChoice.Equals("y"))
                 {
                     var startDate = GetDateTime("departure");
-                    var endDate = GetDateTime("departure");
+                    var endDate = GetDateTime("arrival");
                     dateTimeRange = new DateTimeRange
                     {
                         StartDate = startDate,
@@ -45,7 +45,9 @@ namespace AirportClient
                         DateTimeRange = dateTimeRange
                     }).WithIndex())
                     {
-                        Console.WriteLine("Connection #" + index + ":");
+                        Console.WriteLine("Flight #" + (index + 1) + ": (" +
+                                          (item.Length == 1 ? "direct" : "indirect") +
+                                          ")\n");
                         item.ToList().ForEach(PrintFlight);
                         Console.WriteLine();
                     }

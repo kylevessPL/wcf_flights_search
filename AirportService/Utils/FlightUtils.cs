@@ -32,16 +32,49 @@ namespace AirportService.Utils
                 flight.ArrivalDate <= dateTimeRange.EndDate;
         }
 
-        public static IEnumerable<IEnumerable<Flight>> GetAllFlightConnections(IEnumerable<Flight> source, int length,
-            string targetCity)
+        public static IEnumerable<IEnumerable<Flight>> GetAllMatchingConnections(
+            IEnumerable<Flight> flights,
+            string departureCity, string arrivalCity)
         {
-            if (length == 1) return source.Select(t => new[] {t});
-            var comparables = source.ToList();
-            return GetAllFlightConnections(comparables, length - 1, targetCity)
-                .SelectMany(t => comparables
-                        .Where(o => o.DepartureCity.Equals(t.Last().ArrivalCity, StringComparison.OrdinalIgnoreCase))
-                        .TakeUntil(o => o.ArrivalCity.Equals(targetCity, StringComparison.OrdinalIgnoreCase)),
-                    (t1, t2) => t1.Concat(new[] {t2}));
+            var connections = new List<IEnumerable<Flight>>();
+            if (flights == null)
+                return connections;
+            var enumerable = flights.ToList();
+            var maxLength = enumerable.Count;
+            var stack = new Stack<int>(maxLength);
+            var i = 0;
+            while (stack.Count > 0 || i < enumerable.Count)
+                if (i < enumerable.Count)
+                {
+                    if (stack.Count == maxLength)
+                        i = stack.Pop() + 1;
+                    stack.Push(i++);
+                    if (!string.Equals(enumerable[stack.Last()].DepartureCity, departureCity,
+                        StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    var list = stack
+                        .Reverse()
+                        .Select(index => enumerable[index])
+                        .TakeUntil(x => x.ArrivalCity.Equals(arrivalCity, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                    if (list.Where((item, index) =>
+                            index == 0 ||
+                            !item.ArrivalCity.Equals(departureCity, StringComparison.OrdinalIgnoreCase) &&
+                            item.DepartureCity.Equals(list[index - 1].ArrivalCity) &&
+                            item.DepartureDate >= list[index - 1].ArrivalDate &&
+                            item.DepartureDate <= list[index - 1].ArrivalDate.AddDays(1)).Count().Equals(list.Count) &&
+                        list.LastOrDefault().ArrivalCity.Equals(arrivalCity, StringComparison.OrdinalIgnoreCase))
+                        connections.Add(list);
+                }
+                else
+                {
+                    i = stack.Pop() + 1;
+                    if (stack.Count > 0)
+                        i = stack.Pop() + 1;
+                }
+
+            return connections.Select(x => new HashSet<Flight>(x))
+                .Distinct(HashSet<Flight>.CreateSetComparer());
         }
     }
 }

@@ -30,9 +30,13 @@ namespace AirportCommons
             return self.Select((item, index) => (item, index));
         }
 
-        public static bool IsNullOrEmpty<T>(this IEnumerable<T> enumerable)
+        public static IEnumerable<TSource> IfEmpty<TSource>(this IEnumerable<TSource> source,
+            Action<IEnumerable<TSource>> action)
         {
-            return enumerable == null || !enumerable.Any();
+            var list = source.ToList();
+            if (!list.Any()) action(list);
+
+            return list;
         }
     }
 }
